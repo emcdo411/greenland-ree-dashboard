@@ -5,19 +5,29 @@ Strategic mineral intelligence for the Arctic's most contested resource frontier
 
 Author: Maurice McDonald | DFW Plotly Community Leader
 Data Sources: GEUS, USGS MRDS, Mining Company Filings
+
+Streamlit App Version
 """
 
-import dash
-from dash import dcc, html, Input, Output, callback
-import dash_bootstrap_components as dbc
+import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
-from plotly.subplots import make_subplots
 import pandas as pd
 import numpy as np
 
 # ============================================================================
-# CONFIGURATION
+# PAGE CONFIGURATION
+# ============================================================================
+
+st.set_page_config(
+    page_title="Greenland REE Intelligence",
+    page_icon="🌍",
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
+
+# ============================================================================
+# CUSTOM STYLING
 # ============================================================================
 
 # Color Palette (FRED-Style / Maurice McDonald Signature)
@@ -37,43 +47,99 @@ COLORS = {
     'warning': '#FFC107',
 }
 
+# Custom CSS
+st.markdown(f"""
+<style>
+    .main-header {{
+        font-size: 32px;
+        font-weight: bold;
+        color: {COLORS['charcoal']};
+        margin-bottom: 0;
+    }}
+    .sub-header {{
+        font-size: 16px;
+        color: {COLORS['charcoal_light']};
+        margin-top: 0;
+    }}
+    .kpi-card {{
+        background-color: {COLORS['grey_100']};
+        border-left: 4px solid {COLORS['periwinkle']};
+        padding: 15px;
+        border-radius: 4px;
+        margin-bottom: 10px;
+    }}
+    .kpi-value {{
+        font-size: 28px;
+        font-weight: bold;
+        color: {COLORS['periwinkle']};
+        margin: 0;
+    }}
+    .kpi-label {{
+        font-size: 11px;
+        color: {COLORS['charcoal_light']};
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin: 0;
+    }}
+    .finding-box {{
+        background-color: {COLORS['periwinkle_pale']};
+        border-left: 4px solid {COLORS['periwinkle']};
+        padding: 20px;
+        border-radius: 4px;
+        margin: 20px 0;
+    }}
+    .osint-badge {{
+        background-color: {COLORS['periwinkle']};
+        color: white;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: bold;
+        letter-spacing: 1px;
+    }}
+    .stMetric > div {{
+        background-color: {COLORS['grey_100']};
+        padding: 10px;
+        border-radius: 4px;
+        border-left: 4px solid {COLORS['periwinkle']};
+    }}
+</style>
+""", unsafe_allow_html=True)
+
 # ============================================================================
 # DATA LOADING
 # ============================================================================
 
+@st.cache_data
 def load_data():
     """Load and prepare the REE deposits dataset"""
     
-    # Try to load from CSV, fall back to embedded data
-    try:
-        df = pd.read_csv('greenland_ree_deposits.csv')
-    except FileNotFoundError:
-        # Embedded data for standalone operation
-        data = {
-            'deposit_name': ['Tanbreez (Kringlerne)', 'Kvanefjeld', 'Sarfartoq', 'Motzfeldt', 
-                           'Ilímaussaq Complex (Other)', 'Tikiusaaq', 'Qeqertaasaq', 'Milne Land',
-                           'Niaqornaarsuk', 'Qaqarssuk', 'Kangerlussuaq REE Zone', 'Gardar Province South',
-                           'Narsaq Area', 'Ivigtut Area', 'Skaergaard'],
-            'latitude': [60.87, 60.98, 66.48, 61.17, 60.95, 64.22, 69.25, 70.75, 
-                        60.45, 66.12, 67.02, 60.75, 60.92, 61.20, 68.18],
-            'longitude': [-45.88, -45.92, -51.17, -45.08, -45.85, -51.95, -53.50, -26.50,
-                         -45.25, -52.75, -50.70, -46.00, -46.08, -48.17, -31.75],
-            'resource_mt': [4000, 1010, 8.6, 340, 500, 25, 15, 45, 120, 35, 75, 2000, 180, 50, 65],
-            'treo_grade_pct': [0.60, 1.10, 2.00, 0.25, 0.80, 1.50, 0.90, 0.65, 0.45, 1.80, 0.55, 0.70, 0.95, 0.30, 0.25],
-            'heavy_ree_pct': [30, 12, 15, 8, 18, 10, 12, 8, 14, 6, 9, 20, 11, 5, 7],
-            'owner': ['Critical Metals Corp', 'Energy Transition Minerals', 'Hudson Resources', 
-                     'Regency Mines', 'Various', 'Unlicensed', 'Unlicensed', 'GreenRock Resources',
-                     'Tanbreez subsidiary', 'NunaMinerals legacy', 'Government reserved', 
-                     'Multiple operators', 'ETM subsidiary', 'Historical', 'Platina Resources'],
-            'chinese_stake_pct': [0, 9.21, 0, 0, 5, 0, 0, 0, 0, 0, 0, 3, 9.21, 0, 0],
-            'status': ['Advancing - US ownership', 'Blocked - Uranium ban', 'Permitted', 
-                      'Early exploration', 'Multiple licenses', 'Prospect only', 'Prospect only',
-                      'Exploration license', 'Exploration license', 'Abandoned license',
-                      'Reserved area', 'Multiple status', 'License uncertainty', 'Depleted/closed', 'PGE focus'],
-            'uranium_ppm': [15, 285, 45, 60, 120, 30, 25, 40, 55, 20, 35, 150, 220, 15, 10],
-            'strategic_score': [80.0, 52.0, 61.0, 48.0, 58.0, 42.0, 35.0, 40.0, 55.0, 38.0, 45.0, 62.0, 48.0, 25.0, 32.0],
-        }
-        df = pd.DataFrame(data)
+    data = {
+        'deposit_name': ['Tanbreez (Kringlerne)', 'Kvanefjeld', 'Sarfartoq', 'Motzfeldt', 
+                       'Ilímaussaq Complex (Other)', 'Tikiusaaq', 'Qeqertaasaq', 'Milne Land',
+                       'Niaqornaarsuk', 'Qaqarssuk', 'Kangerlussuaq REE Zone', 'Gardar Province South',
+                       'Narsaq Area', 'Ivigtut Area', 'Skaergaard'],
+        'latitude': [60.87, 60.98, 66.48, 61.17, 60.95, 64.22, 69.25, 70.75, 
+                    60.45, 66.12, 67.02, 60.75, 60.92, 61.20, 68.18],
+        'longitude': [-45.88, -45.92, -51.17, -45.08, -45.85, -51.95, -53.50, -26.50,
+                     -45.25, -52.75, -50.70, -46.00, -46.08, -48.17, -31.75],
+        'resource_mt': [4000, 1010, 8.6, 340, 500, 25, 15, 45, 120, 35, 75, 2000, 180, 50, 65],
+        'treo_grade_pct': [0.60, 1.10, 2.00, 0.25, 0.80, 1.50, 0.90, 0.65, 0.45, 1.80, 0.55, 0.70, 0.95, 0.30, 0.25],
+        'heavy_ree_pct': [30, 12, 15, 8, 18, 10, 12, 8, 14, 6, 9, 20, 11, 5, 7],
+        'owner': ['Critical Metals Corp', 'Energy Transition Minerals', 'Hudson Resources', 
+                 'Regency Mines', 'Various', 'Unlicensed', 'Unlicensed', 'GreenRock Resources',
+                 'Tanbreez subsidiary', 'NunaMinerals legacy', 'Government reserved', 
+                 'Multiple operators', 'ETM subsidiary', 'Historical', 'Platina Resources'],
+        'chinese_stake_pct': [0, 9.21, 0, 0, 5, 0, 0, 0, 0, 0, 0, 3, 9.21, 0, 0],
+        'status': ['Advancing - US ownership', 'Blocked - Uranium ban', 'Permitted', 
+                  'Early exploration', 'Multiple licenses', 'Prospect only', 'Prospect only',
+                  'Exploration license', 'Exploration license', 'Abandoned license',
+                  'Reserved area', 'Multiple status', 'License uncertainty', 'Depleted/closed', 'PGE focus'],
+        'uranium_ppm': [15, 285, 45, 60, 120, 30, 25, 40, 55, 20, 35, 150, 220, 15, 10],
+        'strategic_score': [80.0, 52.0, 61.0, 48.0, 58.0, 42.0, 35.0, 40.0, 55.0, 38.0, 45.0, 62.0, 48.0, 25.0, 32.0],
+    }
+    
+    df = pd.DataFrame(data)
     
     # Add derived columns
     df['score_category'] = pd.cut(df['strategic_score'], 
@@ -88,45 +154,71 @@ def load_data():
 df = load_data()
 
 # ============================================================================
-# DASH APP INITIALIZATION
+# HEADER
 # ============================================================================
 
-app = dash.Dash(
-    __name__,
-    external_stylesheets=[dbc.themes.BOOTSTRAP],
-    meta_tags=[{'name': 'viewport', 'content': 'width=device-width, initial-scale=1'}],
-    title='Greenland REE Intelligence'
-)
+col1, col2 = st.columns([3, 1])
 
-server = app.server  # For deployment
+with col1:
+    st.markdown('<span class="osint-badge">● OPEN SOURCE INTELLIGENCE</span>', unsafe_allow_html=True)
+    st.markdown('<p class="main-header">Greenland Rare Earth Intelligence</p>', unsafe_allow_html=True)
+    st.markdown('<p class="sub-header">Strategic mineral assessment for the Arctic\'s most contested resource frontier</p>', unsafe_allow_html=True)
+
+with col2:
+    st.markdown("**Data Sources**")
+    st.caption("GEUS • USGS • SEC Filings")
+
+st.markdown("---")
 
 # ============================================================================
-# COMPONENT BUILDERS
+# KPI STRIP
 # ============================================================================
 
-def create_kpi_card(title, value, subtitle, icon="📊", accent=False):
-    """Create a KPI card component"""
-    return dbc.Card([
-        dbc.CardBody([
-            html.Div(icon, style={'fontSize': '24px', 'marginBottom': '8px'}),
-            html.P(title, className='text-muted mb-1', style={'fontSize': '12px', 'textTransform': 'uppercase'}),
-            html.H3(value, style={
-                'color': COLORS['periwinkle'] if accent else COLORS['charcoal'],
-                'fontWeight': 'bold',
-                'marginBottom': '4px'
-            }),
-            html.P(subtitle, className='text-muted mb-0', style={'fontSize': '11px'})
-        ])
-    ], style={
-        'borderLeft': f"4px solid {COLORS['periwinkle'] if accent else COLORS['grey_300']}",
-        'height': '100%'
-    })
+kpi1, kpi2, kpi3, kpi4 = st.columns(4)
 
+with kpi1:
+    st.metric(
+        label="🗺️ TOTAL DEPOSITS",
+        value=str(len(df)),
+        delta="Documented REE occurrences"
+    )
 
-def create_map_figure(df):
-    """Create the main map visualization"""
+with kpi2:
+    st.metric(
+        label="⛏️ TOTAL RESOURCE",
+        value=f"{df['resource_mt'].sum()/1000:.1f}B Mt",
+        delta="Combined estimate"
+    )
+
+with kpi3:
+    western_pct = len(df[df['chinese_stake_pct']==0])/len(df)*100
+    st.metric(
+        label="🇺🇸 WESTERN CONTROL",
+        value=f"{western_pct:.0f}%",
+        delta=f"{len(df[df['chinese_stake_pct']==0])} of {len(df)} deposits"
+    )
+
+with kpi4:
+    blocked = len(df[df['uranium_ppm'] > 100])
+    st.metric(
+        label="⚠️ URANIUM BLOCKED",
+        value=str(blocked),
+        delta="Deposits >100 ppm U"
+    )
+
+st.markdown("")
+
+# ============================================================================
+# MAIN CONTENT - MAP AND SCORES
+# ============================================================================
+
+map_col, score_col = st.columns([3, 2])
+
+with map_col:
+    st.markdown("#### 🗺️ Deposit Locations")
+    st.caption("Size = Resource | Color = Strategic Score")
     
-    fig = px.scatter_mapbox(
+    fig_map = px.scatter_mapbox(
         df,
         lat='latitude',
         lon='longitude',
@@ -149,32 +241,32 @@ def create_map_figure(df):
             [1, COLORS['periwinkle_dark']]
         ],
         size_max=40,
-        zoom=3,
+        zoom=2.5,
         center={'lat': 68, 'lon': -42},
-        mapbox_style='carto-positron'
+        mapbox_style='carto-positron',
+        height=450
     )
     
-    fig.update_layout(
+    fig_map.update_layout(
         margin=dict(l=0, r=0, t=0, b=0),
         coloraxis_colorbar=dict(
             title='Strategic<br>Score',
             tickfont=dict(size=10),
             titlefont=dict(size=11)
-        ),
-        paper_bgcolor='white'
+        )
     )
     
-    return fig
+    st.plotly_chart(fig_map, use_container_width=True)
 
-
-def create_score_comparison(df):
-    """Create horizontal bar chart of strategic scores"""
+with score_col:
+    st.markdown("#### 📊 Strategic Score Ranking")
+    st.caption("Top deposits by strategic value")
     
     df_sorted = df.sort_values('strategic_score', ascending=True).tail(10)
     
-    fig = go.Figure()
+    fig_scores = go.Figure()
     
-    fig.add_trace(go.Bar(
+    fig_scores.add_trace(go.Bar(
         y=df_sorted['deposit_name'],
         x=df_sorted['strategic_score'],
         orientation='h',
@@ -184,8 +276,7 @@ def create_score_comparison(df):
                 [0, COLORS['grey_300']],
                 [0.5, COLORS['periwinkle_light']],
                 [1, COLORS['periwinkle']]
-            ],
-            line=dict(width=0)
+            ]
         ),
         text=df_sorted['strategic_score'].round(0).astype(int),
         textposition='outside',
@@ -193,30 +284,28 @@ def create_score_comparison(df):
         hovertemplate='<b>%{y}</b><br>Score: %{x:.1f}<extra></extra>'
     ))
     
-    fig.update_layout(
-        xaxis=dict(
-            title='Strategic Score',
-            range=[0, 100],
-            gridcolor=COLORS['grey_200'],
-            tickfont=dict(size=10)
-        ),
-        yaxis=dict(
-            title='',
-            tickfont=dict(size=10)
-        ),
-        margin=dict(l=10, r=40, t=10, b=40),
+    fig_scores.update_layout(
+        xaxis=dict(title='Strategic Score', range=[0, 100], gridcolor=COLORS['grey_200']),
+        yaxis=dict(title=''),
+        margin=dict(l=10, r=50, t=10, b=40),
         paper_bgcolor='white',
         plot_bgcolor='white',
-        height=350
+        height=400
     )
     
-    return fig
+    st.plotly_chart(fig_scores, use_container_width=True)
 
+# ============================================================================
+# SECONDARY CHARTS
+# ============================================================================
 
-def create_resource_vs_grade(df):
-    """Create scatter plot of resource size vs grade"""
+chart1, chart2, chart3 = st.columns([2, 1, 1])
+
+with chart1:
+    st.markdown("#### 💎 Resource vs Grade")
+    st.caption("Bubble size = Heavy REE %")
     
-    fig = px.scatter(
+    fig_scatter = px.scatter(
         df,
         x='resource_mt',
         y='treo_grade_pct',
@@ -233,76 +322,61 @@ def create_resource_vs_grade(df):
             'resource_mt': 'Resource (Million Tonnes, log scale)',
             'treo_grade_pct': 'Grade (% TREO)',
             'heavy_ree_pct': 'Heavy REE %'
-        }
+        },
+        height=300
     )
     
-    fig.update_layout(
+    fig_scatter.update_layout(
         margin=dict(l=10, r=10, t=10, b=40),
         paper_bgcolor='white',
         plot_bgcolor='white',
         xaxis=dict(gridcolor=COLORS['grey_200']),
         yaxis=dict(gridcolor=COLORS['grey_200']),
-        legend=dict(
-            orientation='h',
-            yanchor='bottom',
-            y=1.02,
-            xanchor='right',
-            x=1
-        ),
-        height=300
+        legend=dict(orientation='h', yanchor='bottom', y=1.02, xanchor='right', x=1)
     )
     
-    return fig
+    st.plotly_chart(fig_scatter, use_container_width=True)
 
-
-def create_ownership_pie(df):
-    """Create ownership breakdown pie chart"""
+with chart2:
+    st.markdown("#### 🏛️ Ownership")
+    st.caption("By resource volume")
     
     western = df[df['chinese_stake_pct'] == 0]['resource_mt'].sum()
     chinese_exposed = df[df['chinese_stake_pct'] > 0]['resource_mt'].sum()
     
-    fig = go.Figure(data=[go.Pie(
+    fig_pie = go.Figure(data=[go.Pie(
         labels=['Western Control', 'Chinese Exposure'],
         values=[western, chinese_exposed],
         hole=0.6,
         marker=dict(colors=[COLORS['periwinkle'], COLORS['danger']]),
         textinfo='percent',
-        textfont=dict(size=12),
-        hovertemplate='<b>%{label}</b><br>%{value:,.0f} Mt<br>%{percent}<extra></extra>'
+        textfont=dict(size=12)
     )])
     
-    fig.update_layout(
+    fig_pie.update_layout(
         margin=dict(l=10, r=10, t=10, b=10),
-        paper_bgcolor='white',
         showlegend=True,
-        legend=dict(
-            orientation='h',
-            yanchor='bottom',
-            y=-0.2,
-            xanchor='center',
-            x=0.5,
-            font=dict(size=10)
-        ),
-        height=250,
+        legend=dict(orientation='h', yanchor='bottom', y=-0.3, xanchor='center', x=0.5, font=dict(size=9)),
+        height=280,
         annotations=[dict(
             text=f'{western/(western+chinese_exposed)*100:.0f}%<br>Western',
             x=0.5, y=0.5,
-            font=dict(size=14, color=COLORS['charcoal']),
+            font=dict(size=12, color=COLORS['charcoal']),
             showarrow=False
         )]
     )
     
-    return fig
+    st.plotly_chart(fig_pie, use_container_width=True)
 
-
-def create_uranium_status_chart(df):
-    """Create uranium status breakdown"""
+with chart3:
+    st.markdown("#### ☢️ Uranium Status")
+    st.caption("2021 ban impact")
     
     clear = len(df[df['uranium_ppm'] <= 100])
     blocked = len(df[df['uranium_ppm'] > 100])
     
-    fig = go.Figure(data=[go.Bar(
-        x=['Clear (<100 ppm)', 'Blocked (>100 ppm)'],
+    fig_uranium = go.Figure(data=[go.Bar(
+        x=['Clear', 'Blocked'],
         y=[clear, blocked],
         marker=dict(color=[COLORS['success'], COLORS['danger']]),
         text=[clear, blocked],
@@ -310,270 +384,73 @@ def create_uranium_status_chart(df):
         textfont=dict(size=14, color=COLORS['charcoal'])
     )])
     
-    fig.update_layout(
+    fig_uranium.update_layout(
         margin=dict(l=10, r=10, t=10, b=40),
         paper_bgcolor='white',
         plot_bgcolor='white',
-        xaxis=dict(title='', tickfont=dict(size=10)),
-        yaxis=dict(title='Number of Deposits', gridcolor=COLORS['grey_200'], tickfont=dict(size=10)),
-        height=250
+        xaxis=dict(title=''),
+        yaxis=dict(title='Deposits', gridcolor=COLORS['grey_200']),
+        height=280
     )
     
-    return fig
-
-
-# ============================================================================
-# APP LAYOUT
-# ============================================================================
-
-app.layout = dbc.Container([
-    
-    # Header
-    dbc.Row([
-        dbc.Col([
-            html.Div([
-                html.Span('● ', style={'color': COLORS['periwinkle'], 'fontSize': '14px'}),
-                html.Span('OPEN SOURCE INTELLIGENCE', style={
-                    'fontSize': '11px',
-                    'letterSpacing': '2px',
-                    'color': COLORS['periwinkle_dark'],
-                    'fontWeight': 'bold'
-                })
-            ], style={'marginBottom': '8px'}),
-            html.H1('Greenland Rare Earth Intelligence', style={
-                'color': COLORS['charcoal'],
-                'fontWeight': 'bold',
-                'marginBottom': '4px',
-                'fontSize': '28px'
-            }),
-            html.P('Strategic mineral assessment for the Arctic\'s most contested resource frontier', 
-                   style={'color': COLORS['charcoal_light'], 'marginBottom': '0'})
-        ], width=8),
-        dbc.Col([
-            html.Div([
-                html.P('Data Sources', style={'fontSize': '10px', 'color': COLORS['charcoal_light'], 'marginBottom': '4px'}),
-                html.Span('GEUS', className='badge', style={'backgroundColor': COLORS['periwinkle'], 'marginRight': '4px'}),
-                html.Span('USGS', className='badge', style={'backgroundColor': COLORS['periwinkle_dark'], 'marginRight': '4px'}),
-                html.Span('SEC', className='badge', style={'backgroundColor': COLORS['charcoal_light']}),
-            ], style={'textAlign': 'right'})
-        ], width=4)
-    ], className='mb-4 mt-3'),
-    
-    # KPI Strip
-    dbc.Row([
-        dbc.Col(create_kpi_card(
-            'Total Deposits', 
-            str(len(df)), 
-            'Documented REE occurrences',
-            '🗺️',
-            accent=True
-        ), width=3),
-        dbc.Col(create_kpi_card(
-            'Total Resource', 
-            f'{df["resource_mt"].sum()/1000:.1f}B Mt', 
-            'Combined resource estimate',
-            '⛏️'
-        ), width=3),
-        dbc.Col(create_kpi_card(
-            'Western Control', 
-            f'{len(df[df["chinese_stake_pct"]==0])/len(df)*100:.0f}%', 
-            f'{len(df[df["chinese_stake_pct"]==0])} of {len(df)} deposits',
-            '🇺🇸',
-            accent=True
-        ), width=3),
-        dbc.Col(create_kpi_card(
-            'Uranium Blocked', 
-            str(len(df[df['uranium_ppm'] > 100])), 
-            'Deposits >100 ppm U',
-            '⚠️'
-        ), width=3),
-    ], className='mb-4'),
-    
-    # Main Content Row
-    dbc.Row([
-        # Map Column
-        dbc.Col([
-            dbc.Card([
-                dbc.CardHeader([
-                    html.H6('Deposit Locations', className='mb-0', style={'fontWeight': 'bold'}),
-                    html.Small('Size = Resource | Color = Strategic Score', className='text-muted')
-                ]),
-                dbc.CardBody([
-                    dcc.Graph(
-                        id='main-map',
-                        figure=create_map_figure(df),
-                        style={'height': '450px'},
-                        config={'displayModeBar': False}
-                    )
-                ], style={'padding': '0'})
-            ])
-        ], width=7),
-        
-        # Score Column
-        dbc.Col([
-            dbc.Card([
-                dbc.CardHeader([
-                    html.H6('Strategic Score Ranking', className='mb-0', style={'fontWeight': 'bold'}),
-                    html.Small('Top 10 deposits by strategic value', className='text-muted')
-                ]),
-                dbc.CardBody([
-                    dcc.Graph(
-                        id='score-chart',
-                        figure=create_score_comparison(df),
-                        config={'displayModeBar': False}
-                    )
-                ])
-            ])
-        ], width=5),
-    ], className='mb-4'),
-    
-    # Secondary Charts Row
-    dbc.Row([
-        dbc.Col([
-            dbc.Card([
-                dbc.CardHeader([
-                    html.H6('Resource vs Grade', className='mb-0', style={'fontWeight': 'bold'}),
-                    html.Small('Bubble size = Heavy REE %', className='text-muted')
-                ]),
-                dbc.CardBody([
-                    dcc.Graph(
-                        id='scatter-chart',
-                        figure=create_resource_vs_grade(df),
-                        config={'displayModeBar': False}
-                    )
-                ])
-            ])
-        ], width=6),
-        dbc.Col([
-            dbc.Card([
-                dbc.CardHeader([
-                    html.H6('Ownership Breakdown', className='mb-0', style={'fontWeight': 'bold'}),
-                    html.Small('By total resource volume', className='text-muted')
-                ]),
-                dbc.CardBody([
-                    dcc.Graph(
-                        id='ownership-pie',
-                        figure=create_ownership_pie(df),
-                        config={'displayModeBar': False}
-                    )
-                ])
-            ])
-        ], width=3),
-        dbc.Col([
-            dbc.Card([
-                dbc.CardHeader([
-                    html.H6('Uranium Status', className='mb-0', style={'fontWeight': 'bold'}),
-                    html.Small('2021 ban impact', className='text-muted')
-                ]),
-                dbc.CardBody([
-                    dcc.Graph(
-                        id='uranium-chart',
-                        figure=create_uranium_status_chart(df),
-                        config={'displayModeBar': False}
-                    )
-                ])
-            ])
-        ], width=3),
-    ], className='mb-4'),
-    
-    # Key Finding Banner
-    dbc.Row([
-        dbc.Col([
-            dbc.Card([
-                dbc.CardBody([
-                    html.Div([
-                        html.Span('KEY FINDING', style={
-                            'fontSize': '10px',
-                            'fontWeight': 'bold',
-                            'color': COLORS['periwinkle_dark'],
-                            'letterSpacing': '1px'
-                        }),
-                    ], style={'marginBottom': '8px'}),
-                    html.P([
-                        html.Strong('Tanbreez'), 
-                        ' (80/100) is the most strategically valuable deposit for Western interests. ',
-                        'With 30% heavy REE content (highest globally), zero Chinese exposure, ',
-                        'and US corporate control, it represents the best opportunity for supply chain diversification.'
-                    ], style={'marginBottom': '0', 'fontSize': '14px'})
-                ])
-            ], style={'borderLeft': f'4px solid {COLORS["periwinkle"]}', 'backgroundColor': COLORS['periwinkle_pale']})
-        ])
-    ], className='mb-4'),
-    
-    # Data Table
-    dbc.Row([
-        dbc.Col([
-            dbc.Card([
-                dbc.CardHeader([
-                    html.H6('Deposit Details', className='mb-0', style={'fontWeight': 'bold'}),
-                    html.Small('Click column headers to sort', className='text-muted')
-                ]),
-                dbc.CardBody([
-                    dbc.Table.from_dataframe(
-                        df[['deposit_name', 'strategic_score', 'resource_mt', 'treo_grade_pct', 
-                            'heavy_ree_pct', 'owner', 'chinese_stake_pct', 'status']].sort_values(
-                            'strategic_score', ascending=False
-                        ).round(2),
-                        striped=True,
-                        bordered=True,
-                        hover=True,
-                        size='sm',
-                        style={'fontSize': '11px'}
-                    )
-                ])
-            ])
-        ])
-    ], className='mb-4'),
-    
-    # Footer
-    dbc.Row([
-        dbc.Col([
-            html.Hr(),
-            html.Div([
-                html.Span('Analysis by ', style={'color': COLORS['charcoal_light']}),
-                html.Strong('Maurice McDonald'),
-                html.Span(' | DFW Plotly Community Leader | ', style={'color': COLORS['charcoal_light']}),
-                html.A('GitHub', href='https://github.com/emcdo41/greenland-ree-dashboard', target='_blank'),
-                html.Span(' | ', style={'color': COLORS['charcoal_light']}),
-                html.Span('Data: GEUS, USGS, Mining Filings', style={'color': COLORS['charcoal_light'], 'fontSize': '11px'})
-            ], style={'textAlign': 'center', 'paddingBottom': '20px'})
-        ])
-    ])
-    
-], fluid=True, style={'maxWidth': '1400px', 'backgroundColor': COLORS['white']})
+    st.plotly_chart(fig_uranium, use_container_width=True)
 
 # ============================================================================
-# CALLBACKS (for future interactivity)
+# KEY FINDING
 # ============================================================================
 
-# Example callback - update charts based on map click
-@callback(
-    Output('score-chart', 'figure'),
-    Input('main-map', 'clickData'),
-    prevent_initial_call=True
+st.markdown("""
+<div class="finding-box">
+    <p style="font-size: 10px; font-weight: bold; color: #6B7FC2; letter-spacing: 1px; margin-bottom: 8px;">KEY FINDING</p>
+    <p style="margin: 0; font-size: 14px;">
+        <strong>Tanbreez</strong> (80/100) is the most strategically valuable deposit for Western interests. 
+        With 30% heavy REE content (highest globally), zero Chinese exposure, 
+        and US corporate control, it represents the best opportunity for supply chain diversification.
+    </p>
+</div>
+""", unsafe_allow_html=True)
+
+# ============================================================================
+# DATA TABLE
+# ============================================================================
+
+st.markdown("#### 📋 Deposit Details")
+
+st.dataframe(
+    df[['deposit_name', 'strategic_score', 'resource_mt', 'treo_grade_pct', 
+        'heavy_ree_pct', 'owner', 'chinese_stake_pct', 'status']].sort_values(
+        'strategic_score', ascending=False
+    ).reset_index(drop=True),
+    use_container_width=True,
+    hide_index=True,
+    column_config={
+        'deposit_name': st.column_config.TextColumn('Deposit', width='medium'),
+        'strategic_score': st.column_config.NumberColumn('Score', format='%.1f'),
+        'resource_mt': st.column_config.NumberColumn('Resource (Mt)', format='%.0f'),
+        'treo_grade_pct': st.column_config.NumberColumn('Grade %', format='%.2f'),
+        'heavy_ree_pct': st.column_config.NumberColumn('Heavy REE %', format='%.0f'),
+        'owner': st.column_config.TextColumn('Owner', width='medium'),
+        'chinese_stake_pct': st.column_config.NumberColumn('Chinese %', format='%.1f'),
+        'status': st.column_config.TextColumn('Status', width='medium'),
+    }
 )
-def highlight_selected(click_data):
-    """Highlight selected deposit in bar chart"""
-    fig = create_score_comparison(df)
-    
-    if click_data:
-        selected = click_data['points'][0]['hovertext']
-        # Add highlight logic here if needed
-    
-    return fig
 
 # ============================================================================
-# RUN SERVER
+# FOOTER
 # ============================================================================
 
-if __name__ == '__main__':
-    print("\n" + "="*60)
-    print("🌍 GREENLAND RARE EARTH INTELLIGENCE DASHBOARD")
-    print("="*60)
-    print(f"\n📊 Loaded {len(df)} deposits")
-    print(f"💎 Total resource: {df['resource_mt'].sum()/1000:.1f}B Mt")
-    print(f"🇺🇸 Western control: {len(df[df['chinese_stake_pct']==0])}/{len(df)} deposits")
-    print(f"\n🚀 Starting server at http://127.0.0.1:8050")
-    print("   Press Ctrl+C to quit\n")
-    
-    app.run_server(debug=True, port=8050)
+st.markdown("---")
+
+foot1, foot2, foot3 = st.columns(3)
+
+with foot1:
+    st.markdown("**Analysis by Maurice McDonald**")
+    st.caption("DFW Plotly Community Leader")
+
+with foot2:
+    st.markdown("**Data Sources**")
+    st.caption("GEUS • USGS MRDS • Mining Filings")
+
+with foot3:
+    st.markdown("**[GitHub Repository](https://github.com/emcdo41/greenland-ree-dashboard)**")
+    st.caption("MIT License")
