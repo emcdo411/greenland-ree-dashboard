@@ -51,11 +51,38 @@ COLORS = {
     'info': '#17A2B8',
 }
 
-# Custom CSS for professional styling
+# Custom CSS for professional styling - FIXED SIDEBAR
 st.markdown(f"""
 <style>
-    /* Main background */
+    /* ===== SIDEBAR STYLING - MATCH MAIN APP ===== */
+    [data-testid="stSidebar"] {{
+        background-color: {COLORS['white']} !important;
+    }}
+    
+    [data-testid="stSidebar"] > div:first-child {{
+        background-color: {COLORS['white']} !important;
+    }}
+    
+    section[data-testid="stSidebar"] {{
+        background-color: {COLORS['white']} !important;
+        border-right: 1px solid {COLORS['grey_200']};
+    }}
+    
+    section[data-testid="stSidebar"] > div {{
+        background-color: {COLORS['white']} !important;
+    }}
+    
+    /* Sidebar content area */
+    .css-1d391kg, .css-1lcbmhc, .css-12oz5g7 {{
+        background-color: {COLORS['white']} !important;
+    }}
+    
+    /* ===== MAIN AREA ===== */
     .stApp {{
+        background-color: {COLORS['grey_50']};
+    }}
+    
+    .main .block-container {{
         background-color: {COLORS['grey_50']};
     }}
     
@@ -73,17 +100,38 @@ st.markdown(f"""
     /* Tabs styling */
     .stTabs [data-baseweb="tab-list"] {{
         gap: 8px;
+        background-color: transparent;
     }}
     
     .stTabs [data-baseweb="tab"] {{
         background-color: {COLORS['grey_100']};
         border-radius: 4px 4px 0 0;
         padding: 10px 20px;
+        color: {COLORS['charcoal']};
     }}
     
     .stTabs [aria-selected="true"] {{
+        background-color: {COLORS['periwinkle']} !important;
+        color: white !important;
+    }}
+    
+    /* Slider styling */
+    .stSlider > div > div {{
+        background-color: {COLORS['periwinkle_light']};
+    }}
+    
+    .stSlider > div > div > div {{
         background-color: {COLORS['periwinkle']};
-        color: white;
+    }}
+    
+    /* Multiselect */
+    .stMultiSelect > div {{
+        background-color: {COLORS['white']};
+    }}
+    
+    /* Radio buttons */
+    .stRadio > div {{
+        background-color: transparent;
     }}
     
     /* Info boxes */
@@ -95,42 +143,31 @@ st.markdown(f"""
         margin: 10px 0;
     }}
     
-    /* Score badges */
-    .score-high {{
-        background-color: {COLORS['success_light']};
-        color: {COLORS['success']};
-        padding: 4px 12px;
-        border-radius: 12px;
-        font-weight: bold;
+    /* Download button */
+    .stDownloadButton > button {{
+        background-color: {COLORS['periwinkle']};
+        color: white;
+        border: none;
     }}
     
-    .score-medium {{
-        background-color: {COLORS['warning_light']};
-        color: #856404;
-        padding: 4px 12px;
-        border-radius: 12px;
-        font-weight: bold;
+    .stDownloadButton > button:hover {{
+        background-color: {COLORS['periwinkle_dark']};
+        color: white;
     }}
     
-    .score-low {{
-        background-color: {COLORS['danger_light']};
-        color: {COLORS['danger']};
-        padding: 4px 12px;
-        border-radius: 12px;
-        font-weight: bold;
-    }}
-    
-    /* Sidebar */
-    [data-testid="stSidebar"] {{
+    /* Selectbox */
+    .stSelectbox > div > div {{
         background-color: {COLORS['white']};
     }}
     
-    /* Footer */
-    .footer {{
-        text-align: center;
-        padding: 20px;
-        color: {COLORS['charcoal_light']};
-        font-size: 12px;
+    /* Dataframe */
+    .stDataFrame {{
+        background-color: {COLORS['white']};
+    }}
+    
+    /* Divider */
+    hr {{
+        border-color: {COLORS['grey_200']};
     }}
 </style>
 """, unsafe_allow_html=True)
@@ -204,50 +241,58 @@ df = load_data()
 # ============================================================================
 
 with st.sidebar:
-    st.image("https://img.icons8.com/color/96/000000/rare-earth-elements.png", width=60)
-    st.markdown("## 🎛️ Controls")
+    st.markdown(f"""
+    <div style="text-align: center; padding: 10px 0 20px 0;">
+        <div style="font-size: 40px;">🌍</div>
+        <div style="font-size: 14px; font-weight: bold; color: {COLORS['charcoal']};">REE Intelligence</div>
+    </div>
+    """, unsafe_allow_html=True)
     
-    st.markdown("---")
-    
-    # Score filter
-    st.markdown("### Strategic Score")
+    st.markdown(f'<p style="font-size: 13px; font-weight: bold; color: {COLORS["charcoal"]}; margin-bottom: 5px;">📊 STRATEGIC SCORE</p>', unsafe_allow_html=True)
     score_range = st.slider(
         "Filter by score range",
         min_value=0,
         max_value=100,
         value=(0, 100),
-        key="score_filter"
+        key="score_filter",
+        label_visibility="collapsed"
     )
     
-    # Ownership filter
-    st.markdown("### Ownership")
+    st.markdown("")
+    
+    st.markdown(f'<p style="font-size: 13px; font-weight: bold; color: {COLORS["charcoal"]}; margin-bottom: 5px;">🏛️ OWNERSHIP</p>', unsafe_allow_html=True)
     ownership_filter = st.multiselect(
         "Filter by ownership",
         options=['Western Control', 'Chinese Exposure'],
-        default=['Western Control', 'Chinese Exposure']
+        default=['Western Control', 'Chinese Exposure'],
+        label_visibility="collapsed"
     )
     
-    # Uranium status filter
-    st.markdown("### Regulatory Status")
+    st.markdown("")
+    
+    st.markdown(f'<p style="font-size: 13px; font-weight: bold; color: {COLORS["charcoal"]}; margin-bottom: 5px;">☢️ URANIUM STATUS</p>', unsafe_allow_html=True)
     uranium_filter = st.multiselect(
         "Uranium ban impact",
         options=['Clear (<100 ppm)', 'Blocked (>100 ppm)'],
-        default=['Clear (<100 ppm)', 'Blocked (>100 ppm)']
+        default=['Clear (<100 ppm)', 'Blocked (>100 ppm)'],
+        label_visibility="collapsed"
     )
     
-    # Status filter
-    st.markdown("### Development Stage")
+    st.markdown("")
+    
+    st.markdown(f'<p style="font-size: 13px; font-weight: bold; color: {COLORS["charcoal"]}; margin-bottom: 5px;">⚙️ PROJECT STATUS</p>', unsafe_allow_html=True)
     status_options = df['status'].unique().tolist()
     status_filter = st.multiselect(
         "Project status",
         options=status_options,
-        default=status_options
+        default=status_options,
+        label_visibility="collapsed"
     )
     
     st.markdown("---")
     
-    # Export options
-    st.markdown("### 📥 Export")
+    # Export
+    st.markdown(f'<p style="font-size: 13px; font-weight: bold; color: {COLORS["charcoal"]}; margin-bottom: 10px;">📥 EXPORT DATA</p>', unsafe_allow_html=True)
     
     @st.cache_data
     def convert_df_to_csv(dataframe):
@@ -255,15 +300,22 @@ with st.sidebar:
     
     csv_data = convert_df_to_csv(df)
     st.download_button(
-        label="Download Full Dataset (CSV)",
+        label="Download CSV",
         data=csv_data,
-        file_name=f"greenland_ree_data_{datetime.now().strftime('%Y%m%d')}.csv",
-        mime="text/csv"
+        file_name=f"greenland_ree_{datetime.now().strftime('%Y%m%d')}.csv",
+        mime="text/csv",
+        use_container_width=True
     )
     
     st.markdown("---")
-    st.caption(f"Last updated: {datetime.now().strftime('%Y-%m-%d')}")
-    st.caption("Data: GEUS • USGS • SEC")
+    
+    st.markdown(f"""
+    <div style="text-align: center; padding: 10px 0;">
+        <p style="font-size: 10px; color: {COLORS['charcoal_light']}; margin: 0;">Data Sources</p>
+        <p style="font-size: 11px; color: {COLORS['charcoal']}; margin: 5px 0 0 0;"><strong>GEUS • USGS • SEC</strong></p>
+        <p style="font-size: 10px; color: {COLORS['charcoal_light']}; margin: 10px 0 0 0;">Updated: {datetime.now().strftime('%Y-%m-%d')}</p>
+    </div>
+    """, unsafe_allow_html=True)
 
 # Apply filters
 filtered_df = df[
@@ -281,9 +333,9 @@ filtered_df = df[
 col_header1, col_header2 = st.columns([3, 1])
 
 with col_header1:
-    st.markdown("""
-    <div style="display: flex; align-items: center; gap: 12px;">
-        <span style="background-color: #8E9FD5; color: white; padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: bold; letter-spacing: 1px;">OPEN SOURCE INTELLIGENCE</span>
+    st.markdown(f"""
+    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 5px;">
+        <span style="background-color: {COLORS['periwinkle']}; color: white; padding: 4px 12px; border-radius: 12px; font-size: 10px; font-weight: bold; letter-spacing: 1px;">OPEN SOURCE INTELLIGENCE</span>
     </div>
     """, unsafe_allow_html=True)
     st.markdown("# 🌍 Greenland Rare Earth Intelligence")
