@@ -1,0 +1,8 @@
+{
+  "name": "Uranium ban lifted",
+  "description": "Greenland repeals the 2021 ban on mining ore above 100 ppm uranium. Kvanefjeld, Narsaq and Gardar South become permittable.",
+  "adjustments": [
+    { "when": { "column": "uranium_ppm", "op": ">", "value": 100 },
+      "set":  { "column": "regulatory_score", "delta": 40 } }
+  ]
+}

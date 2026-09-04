@@ -416,7 +416,7 @@ with tab1:
         st.markdown("#### 🗺️ Strategic Deposit Map")
         st.caption("Size = Resource | Color = Strategic Score | Click for details")
         
-        fig_map = px.scatter_mapbox(
+        fig_map = px.scatter_map(
             filtered_df,
             lat='latitude',
             lon='longitude',
@@ -441,7 +441,7 @@ with tab1:
             size_max=50,
             zoom=2.3,
             center={'lat': 68, 'lon': -42},
-            mapbox_style='carto-positron',
+            map_style='carto-positron',
             height=500
         )
         

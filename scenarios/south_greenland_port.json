@@ -1,0 +1,8 @@
+{
+  "name": "South Greenland deep-water port",
+  "description": "A US-financed port at Narsaq opens, cutting logistics cost for every deposit within 50 km.",
+  "adjustments": [
+    { "when": { "column": "port_distance_km", "op": "<=", "value": 50 },
+      "set":  { "column": "infrastructure_score", "delta": 25 } }
+  ]
+}

@@ -1,0 +1,16 @@
+deposit_name,latitude,longitude,resource_mt,treo_grade_pct,heavy_ree_pct,owner,chinese_stake_pct,status,uranium_ppm,strategic_score,geological_score,regulatory_score,ownership_score,infrastructure_score,geopolitical_score,discovery_year,ice_free_months,port_distance_km
+Tanbreez (Kringlerne),60.87,-45.88,4000.0,0.6,30,Critical Metals Corp,0.0,Advancing,15,80.0,85,90,95,60,70,2007,4,15
+Kvanefjeld,60.98,-45.92,1010.0,1.1,12,Energy Transition Minerals,9.21,Blocked,285,52.0,90,20,50,65,55,1956,4,12
+Sarfartoq,66.48,-51.17,8.6,2.0,15,Hudson Resources,0.0,Permitted,45,61.0,70,75,85,40,50,1995,3,180
+Motzfeldt,61.17,-45.08,340.0,0.25,8,Regency Mines,0.0,Exploration,60,48.0,55,60,80,55,40,1962,4,25
+Ilímaussaq Complex,60.95,-45.85,500.0,0.8,18,Various,5.0,Multiple,120,58.0,75,50,60,60,55,1806,4,15
+Tikiusaaq,64.22,-51.95,25.0,1.5,10,Unlicensed,0.0,Prospect,30,42.0,60,70,90,30,35,2010,3,200
+Qeqertaasaq,69.25,-53.5,15.0,0.9,12,Unlicensed,0.0,Prospect,25,35.0,50,70,90,20,30,2015,2,350
+Milne Land,70.75,-26.5,45.0,0.65,8,GreenRock Resources,0.0,Exploration,40,40.0,45,65,85,25,40,2008,2,400
+Niaqornaarsuk,60.45,-45.25,120.0,0.45,14,Tanbreez Mining,0.0,Exploration,55,55.0,65,70,85,50,45,2005,4,20
+Qaqarssuk,66.12,-52.75,35.0,1.8,6,NunaMinerals,0.0,Abandoned,20,38.0,55,50,80,35,30,1990,3,150
+Kangerlussuaq,67.02,-50.7,75.0,0.55,9,Government,0.0,Reserved,35,45.0,50,40,70,45,50,2000,3,120
+Gardar South,60.75,-46.0,2000.0,0.7,20,Multiple,3.0,Multiple,150,62.0,70,45,65,70,60,1960,4,18
+Narsaq Area,60.92,-46.08,180.0,0.95,11,ETM,9.21,Uncertain,220,48.0,60,30,50,55,50,1960,4,15
+Ivigtut Area,61.2,-48.17,50.0,0.3,5,Historical,0.0,Closed,15,25.0,30,80,85,60,20,1806,4,30
+Skaergaard,68.18,-31.75,65.0,0.25,7,Platina Resources,0.0,PGE Focus,10,32.0,40,75,80,35,25,1930,2,280

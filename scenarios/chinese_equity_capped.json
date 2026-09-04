@@ -1,0 +1,10 @@
+{
+  "name": "Chinese equity capped at 5 percent",
+  "description": "A Western offtake consortium refuses supply from any licence holder with Chinese equity above 5 percent.",
+  "adjustments": [
+    { "when": { "column": "chinese_stake_pct", "op": ">", "value": 5 },
+      "set":  { "column": "ownership_score", "delta": -30 } },
+    { "when": { "column": "chinese_stake_pct", "op": ">", "value": 5 },
+      "set":  { "column": "geopolitical_score", "delta": -15 } }
+  ]
+}
